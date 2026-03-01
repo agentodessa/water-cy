@@ -10,7 +10,8 @@
       "Bash(git:*)",
       "Bash(node:*)",
       "Bash(python3:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
