@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { getFillColor } from '../theme/colors';
 import { useTheme } from '../theme/ThemeContext';
 
+/** percentage: fractional value 0.0–1.0 (e.g. 0.65 = 65%) */
 interface FillBarProps {
   percentage: number;
   height?: number;

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ViewStyle } from 'react-native';
+import { DimensionValue, ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -33,7 +33,7 @@ export function Shimmer({ width = '100%', height = 20, borderRadius = 8, style }
   return (
     <Animated.View
       style={[
-        { width: width as any, height, borderRadius, backgroundColor: colors.surface },
+        { width: width as DimensionValue, height, borderRadius, backgroundColor: colors.surface },
         animStyle,
         style,
       ]}
