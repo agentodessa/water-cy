@@ -12,15 +12,24 @@
       "resizeMode": "contain",
       "backgroundColor": "#0A0F1E"
     },
-    "assetBundlePatterns": ["**/*"],
-    "ios": { "supportsTablet": true },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.cyprus-water"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A0F1E"
       }
     },
-    "plugins": ["expo-router"],
-    "web": { "bundler": "metro" }
+    "plugins": [
+      "expo-router"
+    ],
+    "web": {
+      "bundler": "metro"
+    }
   }
 }

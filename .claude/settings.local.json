@@ -12,7 +12,17 @@
       "Bash(python3:*)",
       "Bash(npx jest:*)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm list:*)",
+      "Bash(while ! ls /Users/test/repos/pet/water-app/node_modules/nativewind)",
+      "Bash(do echo:*)",
+      "Bash(done)",
+      "Bash(pkill -f \"npm install nativewind\")",
+      "Bash(pkill -9 npm)",
+      "Bash(npm show:*)",
+      "Bash(bun --version)",
+      "Bash(bun install:*)",
+      "Bash(node -e \"require\\(''''nativewind/preset''''\\)\")"
     ]
   }
 }
