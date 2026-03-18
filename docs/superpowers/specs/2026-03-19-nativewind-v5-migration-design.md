@@ -26,11 +26,11 @@ react-native-css-interop  (NativeWind v5 runtime dependency)
 
 | File | Action | Purpose |
 |---|---|---|
-| `tailwind.config.js` | Create | Color tokens, content paths, dark mode |
+| `tailwind.config.js` | Create | Color tokens, content paths |
 | `global.css` | Create | Tailwind directives, imported once in `_layout.tsx` |
 | `metro.config.js` | Modify | Wrap with `withNativeWind({ input: './global.css' })` |
 | `babel.config.js` | Modify | Add `nativewind/babel` to presets |
-| `nativewind-env.d.ts` | Create | Triple-slash ref for className type support |
+| `nativewind-env.d.ts` | Create | `/// <reference types="nativewind/types" />` |
 
 ### Color token mapping
 
@@ -38,7 +38,7 @@ All tokens resolve via Tailwind built-ins where an exact match exists; only the 
 
 | Semantic token | Light | Dark | Tailwind class |
 |---|---|---|---|
-| background | `#F0F4F8` | `#0A0F1E` | `bg-[#F0F4F8] dark:bg-[#0A0F1E]` (custom hex in config) |
+| background | `#F0F4F8` | `#0A0F1E` | `bg-[#F0F4F8] dark:bg-[#0A0F1E]` |
 | surface | `#FFFFFF` | `#111827` | `bg-white dark:bg-gray-900` |
 | text | `#0F172A` | `#F1F5F9` | `text-slate-900 dark:text-slate-100` |
 | textSecondary | `#64748B` | `#94A3B8` | `text-slate-500 dark:text-slate-400` |
@@ -47,21 +47,21 @@ All tokens resolve via Tailwind built-ins where an exact match exists; only the 
 | warning | `#F59E0B` | same | `text-amber-500` / `bg-amber-500` |
 | success | `#10B981` | same | `text-emerald-500` / `bg-emerald-500` |
 
-**Glassmorphism rgba values** (`cardBorder`, `cardOverlay`, `card`) have no Tailwind equivalent at their specific alpha levels and remain as inline `style` props inside `GlassCard`.
+**Glassmorphism rgba values** (`cardBorder`, `cardOverlay`, `card`) have no Tailwind equivalent at their specific alpha levels and remain as inline `style` props inside `GlassCard` and `_layout.tsx`.
 
 ### tailwind.config.js shape
 
 ```js
 module.exports = {
-  content: ['./app/**/*.{js,ts,jsx,tsx}', './components/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    './app/**/*.{js,ts,jsx,tsx}',
+    './components/**/*.{js,ts,jsx,tsx}',
+    './lib/**/*.{js,ts}',   // required: getFillClass strings must not be purged
+  ],
   presets: [require('nativewind/preset')],
-  darkMode: 'class',   // NativeWind v5 uses class-based dark mode
+  // Note: do NOT set darkMode — nativewind/preset registers its own dark variant
   theme: {
-    extend: {
-      colors: {
-        background: { light: '#F0F4F8', dark: '#0A0F1E' },
-      },
-    },
+    extend: {},
   },
 };
 ```
@@ -76,7 +76,7 @@ module.exports = {
 
 ### Replacement API
 
-**Color scheme toggle** — `useColorScheme` from `nativewind`:
+**Color scheme + toggle** — `useColorScheme` from `nativewind`:
 
 ```ts
 import { useColorScheme } from 'nativewind';
@@ -84,16 +84,31 @@ const { colorScheme, setColorScheme } = useColorScheme();
 // toggle: setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')
 ```
 
-**Blur intensity** — computed inline where used (no hook needed):
+The toggle button in `app/(tabs)/index.tsx` must replace `toggleTheme()` with this call.
+
+**Blur intensity** — computed inline where used:
 ```ts
 const { colorScheme } = useColorScheme();
 const blurIntensity = colorScheme === 'dark' ? 80 : 60;
 ```
 
-**Fill color util** — `getFillColor(fraction)` in `lib/utils.ts` is replaced by two new exports:
+**Card border color in `_layout.tsx`** — `tabBarStyle` is a plain object passed to expo-router `screenOptions`; NativeWind `className` cannot be used. Replace with `useColorScheme` + ternary over literal rgba values:
+```ts
+borderTopColor: colorScheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)'
+```
+
+**`tintColor` on `RefreshControl`** — this prop accepts a color string directly, not className. Replace `tintColor={colors.accent}` with the literal `tintColor="#0EA5E9"` on all three tab screens.
+
+**Victory chart inline style objects in `trends.tsx`** — chart lib ignores className. Replace `colors.accent` with `'#0EA5E9'` and `colors.textSecondary` with a ternary:
+```ts
+const { colorScheme } = useColorScheme();
+const textSecondary = colorScheme === 'dark' ? '#94A3B8' : '#64748B';
+// then use textSecondary in axisStyle, and '#0EA5E9' for accent
+```
+
+**Fill color util** — `getFillColor()` in `theme/colors.ts` is deleted. Two new exports go in `lib/utils.ts`:
 
 ```ts
-// lib/utils.ts
 export function getFillClass(fraction: number): string {
   if (fraction < 0.2) return 'text-red-500';
   if (fraction < 0.5) return 'text-amber-500';
@@ -107,9 +122,9 @@ export function getFillBgClass(fraction: number): string {
 }
 ```
 
-### QueryClientProvider + ThemeProvider in _layout.tsx
+### `_layout.tsx` provider cleanup
 
-`ThemeProvider` wrapper is removed. `_layout.tsx` only keeps `QueryClientProvider`. The `<StatusBar>` style is driven by `colorScheme`.
+Remove `ThemeProvider` import and wrapper. Keep only `QueryClientProvider`. `<StatusBar>` style is driven by `colorScheme`.
 
 ---
 
@@ -165,63 +180,101 @@ Every `StyleSheet.create()` block is deleted. Its values become inline `classNam
 
 ## Section 4 — File-by-File Migration Plan
 
+### `lib/utils.ts`
+- Add `getFillClass(fraction)` and `getFillBgClass(fraction)` exports
+- Existing `getFillColor(fraction)` is deleted
+
 ### `components/GlassCard.tsx`
 - Add `className?: string` prop for layout overrides from callers
-- Internal: `styles.blur` → `className="rounded-[20px] overflow-hidden"`
-- Internal: `styles.overlay` → `className="rounded-[20px] border"`
-- Glassmorphism rgba values (`backgroundColor: colors.cardOverlay`, `borderColor: colors.cardBorder`) remain inline — no Tailwind equivalent
+- `styles.blur` → `className="rounded-[20px] overflow-hidden"`
+- `styles.overlay` → `className="rounded-[20px] border"`
+- `backgroundColor: colors.cardOverlay` and `borderColor: colors.cardBorder` remain inline (rgba values, no Tailwind equivalent)
+- Replace `useTheme()` with `useColorScheme()` for `blurIntensity`
 
 ### `components/FillBar.tsx`
 - `styles.track` → `className="rounded-[3px] overflow-hidden w-full"`
-- `styles.fill` → `className="rounded-[3px]"` + `style={{ width: \`${pct}%\`, height }}`
 - Track background → `className="bg-white dark:bg-gray-900"`
-- Fill color → `className={getFillBgClass(fraction)}` (replaces inline backgroundColor)
+- `styles.fill` → `className={`rounded-[3px] ${getFillBgClass(fraction)}`}` + `style={{ width: \`${pct}%\`, height }}`
+- Remove `useTheme()`, no color references remain
 
 ### `components/SystemGauge.tsx`
 - `styles.card` → `className="m-4 items-center"`
 - `styles.container` → `className="items-center justify-center"`
 - `styles.centerText` → `className="absolute items-center"`
-- `styles.pct` → `className="text-[36px] font-extrabold tracking-[-1px] ..."` + `className={getFillClass(pct)}`
-- `styles.label` / `styles.date` → `className="... text-slate-500 dark:text-slate-400"`
+- `styles.pct` → `className={\`text-[36px] font-extrabold tracking-[-1px] ${getFillClass(pct)}\`}`
+- `styles.label` / `styles.date` → `className="text-xs text-slate-500 dark:text-slate-400 ..."`
+- Replace `useTheme()` with `useColorScheme()`
 
 ### `components/DamCard.tsx`
 - `styles.card` → `className="w-[110px] mr-2.5"` on the GlassCard
 - `styles.name` → `className="text-xs font-semibold mb-1 text-slate-900 dark:text-slate-100"`
-- `styles.pct` → `className="text-[18px] font-extrabold mb-1.5 ..."` + `className={getFillClass(pct)}`
+- `styles.pct` → `className={\`text-[18px] font-extrabold mb-1.5 ${getFillClass(pct)}\`}`
+- Remove `useTheme()`
 
 ### `components/DamRow.tsx`
 - `styles.row` → `className="rounded-2xl p-3.5 mx-4 mb-2.5 bg-white dark:bg-gray-900"`
-- `styles.top` / `styles.bottom` → `className="flex-row justify-between ..."`
-- Name / pct text → `className="text-[15px] font-bold text-slate-900 dark:text-slate-100"`
+- `styles.top` → `className="flex-row justify-between mb-2"`
+- `styles.bottom` → `className="flex-row justify-between mt-1.5"`
+- Name / pct text → `className={\`text-[15px] font-bold ${getFillClass(pct)}\`}` / `text-slate-900 dark:text-slate-100`
 - Sub text → `className="text-[11px] text-slate-500 dark:text-slate-400"`
+- Remove `useTheme()`
 
 ### `components/Shimmer.tsx`
-- Animated.View inline style: layout props (width/height/borderRadius) stay inline (dynamic); `backgroundColor` → NativeWind class not viable on Animated.View directly; use `className="bg-white dark:bg-gray-900"` with `cssInterop` or keep inline
+- Uses `Animated.View` from `react-native-reanimated`. NativeWind v5 does not apply `className` to reanimated's `Animated.View` without explicit wiring.
+- At module level, add:
+  ```ts
+  import Animated from 'react-native-reanimated';
+  import { cssInterop } from 'nativewind';
+  cssInterop(Animated.View, { className: 'style' });
+  ```
+- Then `className="bg-white dark:bg-gray-900"` works. Width/height/borderRadius remain inline (passed as props).
+
+### `app/_layout.tsx`
+- Add `import './global.css'` — required for NativeWind to apply classes at runtime
+- Remove `ThemeProvider` import and wrapper; keep only `QueryClientProvider`
+
+### `app/(tabs)/_layout.tsx`
+- Remove `ThemeProvider` import and wrapper
+- Replace `useTheme()` with `useColorScheme()` from `nativewind`
+- `tabBarStyle` and `tabBarLabelStyle` remain inline objects (passed to expo-router screenOptions)
+- `borderTopColor` → ternary over literal rgba values (see Section 2)
+- `tabBarActiveTintColor` → literal `'#0EA5E9'`
+- `tabBarInactiveTintColor` → `colorScheme === 'dark' ? '#94A3B8' : '#64748B'`
+- `backgroundColor: 'transparent'` can stay as-is
 
 ### `app/(tabs)/index.tsx`
 - All `styles.*` + color merges → className strings
+- Replace `useTheme()` with `useColorScheme()`
+- Toggle button: `setColorScheme(colorScheme === 'dark' ? 'light' : 'dark')`
+- `tintColor="#0EA5E9"` (literal)
 - `paddingTop: insets.top + 12` stays `style={}`
 - `paddingBottom: 100 + insets.bottom` stays `style={}`
 - Inflow grid item: `className="w-[30%] rounded-xl p-2.5 bg-white dark:bg-gray-900"`
+- Inflow value text uses `colors.accent` → `className="text-sky-500"`
 
 ### `app/(tabs)/dams.tsx`
 - All `styles.*` → className
-- Sort chips: conditional `className` based on active sort
+- Replace `useTheme()` with `useColorScheme()`
+- `tintColor="#0EA5E9"` (literal)
+- Sort chips: conditional className based on active sort
+- Shimmer: `className="mx-4 mb-2.5"` replaces inline style
 
 ### `app/(tabs)/trends.tsx`
 - All `styles.*` → className
-- Victory chart style objects remain inline (chart lib ignores className)
-- Year color chips: conditional className or inline for YEAR_COLORS array (these are data-driven non-semantic colors — keep inline)
-
-### `app/(tabs)/_layout.tsx`
-- Tab bar `tabBarStyle` / `tabBarLabelStyle` remain inline (passed to expo-router screenOptions, not a React Native View)
-- Remove ThemeProvider import/usage
+- Replace `useTheme()` with `useColorScheme()`
+- `tintColor="#0EA5E9"` (literal)
+- Victory chart style objects remain inline; replace `colors.accent` with `'#0EA5E9'` literal and `colors.textSecondary` with colorScheme ternary (see Section 2)
+- YEAR_COLORS chips: keep inline `style` for chip background (data-driven non-semantic colors)
 
 ### `app/dam/[name].tsx`
 - All `styles.*` → className
+- Replace `useTheme()` with `useColorScheme()`
 - Back button `top: insets.top + 8` stays `style={}`
-- Overlay text colors (`#fff`, `rgba(255,255,255,0.7)`) → `text-white` / `text-white/70`
-- Back button bg `rgba(0,0,0,0.4)` → `bg-black/40`
+- `contentContainerStyle={{ paddingBottom: 40 }}` → convert to `className` on a wrapper View (static value)
+- Overlay text: `text-white` / `text-white/70`
+- Back button bg: `className="bg-black/40"`
+- `Ionicons` `color` prop: replace `colors.accent` with literal `'#0EA5E9'`; icon colors do not accept className
+- Wiki button `borderColor` and wiki text `color`: replace `colors.accent` with literal `'#0EA5E9'` via inline `style` (border prop) and `className="text-sky-500"` (text)
 
 ---
 
@@ -233,8 +286,10 @@ Every `StyleSheet.create()` block is deleted. Its values become inline `classNam
 | All tab screens | `paddingTop: insets.top + N` | Runtime safe-area value |
 | `dam/[name].tsx` | `top: insets.top + 8` | Runtime safe-area value |
 | `GlassCard` | `cardOverlay` / `cardBorder` rgba | No Tailwind equivalent |
-| `Shimmer` | `width`, `height`, `borderRadius` | Passed as props, dynamic |
-| `trends.tsx` | Victory chart style objects | Chart lib ignores className |
+| `_layout.tsx` | `tabBarStyle` / `tabBarLabelStyle` | expo-router screenOptions, not a View |
+| `_layout.tsx` | `borderTopColor` rgba ternary | Same as above |
+| `Shimmer` | `width`, `height`, `borderRadius` | Dynamic props |
+| `trends.tsx` | Victory chart `data`/`axis` style objects | Chart lib ignores className |
 | `trends.tsx` | YEAR_COLORS chips | Data-driven non-semantic colors |
 | `FillBar` | `width: \`${pct}%\`` | Runtime percentage |
 
@@ -242,6 +297,14 @@ Every `StyleSheet.create()` block is deleted. Its values become inline `classNam
 
 ## Section 6 — Testing
 
-No test changes required. Existing tests mock `expo-blur` and `react-native-reanimated`; they don't assert on StyleSheet values. Add `nativewind` to jest mocks if className-related assertions are added later.
+Three test files require changes after the ThemeContext deletion:
 
-Post-migration smoke check: run `npx jest` — all 10 tests should pass unchanged.
+| File | Change required |
+|---|---|
+| `__tests__/theme.test.ts` | Imports `getFillColor` from `../theme/colors` — update to import `getFillClass`/`getFillBgClass` from `../lib/utils` and update assertions |
+| `__tests__/DamRow.test.tsx` | Imports `ThemeProvider` as wrapper — remove wrapper (NativeWind v5 needs no provider in tests); remove now-dead `@react-native-async-storage/async-storage` mock if it was only needed by `ThemeProvider` |
+| `__tests__/SystemGauge.test.tsx` | Same as DamRow — remove `ThemeProvider` wrapper |
+
+Add `nativewind` to jest mock list if className assertions are added later. For now no new mocks are required.
+
+Post-migration smoke check: `npx jest` — all 10 tests should pass after the above updates.
