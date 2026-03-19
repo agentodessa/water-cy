@@ -1,16 +1,28 @@
-import { getFillColor } from '../theme/colors';
+import { getFillBgClass, getFillClass } from '../lib/utils';
 
-describe('getFillColor', () => {
-  it('returns danger for < 20%', () => {
-    expect(getFillColor(0.1)).toBe('#EF4444');
-    expect(getFillColor(0.199)).toBe('#EF4444');
+describe('getFillClass', () => {
+  it('returns danger class for < 20%', () => {
+    expect(getFillClass(0.1)).toBe('text-red-500');
+    expect(getFillClass(0.199)).toBe('text-red-500');
   });
-  it('returns warning for 20–50%', () => {
-    expect(getFillColor(0.2)).toBe('#F59E0B');
-    expect(getFillColor(0.499)).toBe('#F59E0B');
+  it('returns warning class for 20–50%', () => {
+    expect(getFillClass(0.2)).toBe('text-amber-500');
+    expect(getFillClass(0.499)).toBe('text-amber-500');
   });
-  it('returns success for >= 50%', () => {
-    expect(getFillColor(0.5)).toBe('#10B981');
-    expect(getFillColor(1.0)).toBe('#10B981');
+  it('returns success class for >= 50%', () => {
+    expect(getFillClass(0.5)).toBe('text-emerald-500');
+    expect(getFillClass(1.0)).toBe('text-emerald-500');
+  });
+});
+
+describe('getFillBgClass', () => {
+  it('returns danger bg class for < 20%', () => {
+    expect(getFillBgClass(0.1)).toBe('bg-red-500');
+  });
+  it('returns warning bg class for 20–50%', () => {
+    expect(getFillBgClass(0.2)).toBe('bg-amber-500');
+  });
+  it('returns success bg class for >= 50%', () => {
+    expect(getFillBgClass(0.5)).toBe('bg-emerald-500');
   });
 });
