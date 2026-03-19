@@ -1,18 +1,18 @@
 import { useRouter } from 'expo-router';
+import { useColorScheme } from 'nativewind';
 import React, { useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DamRow } from '../../components/DamRow';
 import { Shimmer } from '../../components/Shimmer';
 import { useDams } from '../../hooks/useDams';
 import { useDateStatistics } from '../../hooks/useDateStatistics';
 import { usePercentages } from '../../hooks/usePercentages';
-import { useTheme } from '../../theme/ThemeContext';
 
 type SortKey = 'fill' | 'capacity' | 'name';
 
 export default function DamsScreen() {
-  const { colors } = useTheme();
+  const { colorScheme } = useColorScheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [sort, setSort] = useState<SortKey>('fill');
@@ -38,26 +38,26 @@ export default function DamsScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]"
       contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
           onRefresh={() => { r1(); r2(); }}
-          tintColor={colors.accent}
+          tintColor="#0EA5E9"
         />
       }
     >
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Reservoirs</Text>
-        <View style={styles.sortRow}>
+      <View className="px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+        <Text className="text-[22px] font-extrabold tracking-tight mb-3 text-slate-900 dark:text-slate-100">Reservoirs</Text>
+        <View className="flex-row gap-2">
           {(['fill', 'capacity', 'name'] as SortKey[]).map(key => (
             <TouchableOpacity
               key={key}
               onPress={() => setSort(key)}
-              style={[styles.chip, { backgroundColor: sort === key ? colors.accent : colors.surface }]}
+              className={`px-3 py-1.5 rounded-full ${sort === key ? 'bg-sky-500' : 'bg-white dark:bg-gray-900'}`}
             >
-              <Text style={[styles.chipText, { color: sort === key ? '#fff' : colors.textSecondary }]}>
+              <Text className={`text-xs font-semibold ${sort === key ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                 {key === 'fill' ? 'Fill %' : key === 'capacity' ? 'Capacity' : 'Name'}
               </Text>
             </TouchableOpacity>
@@ -82,12 +82,3 @@ export default function DamsScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header:    { paddingHorizontal: 16, paddingBottom: 12 },
-  title:     { fontSize: 22, fontWeight: '800', letterSpacing: -0.5, marginBottom: 12 },
-  sortRow:   { flexDirection: 'row', gap: 8 },
-  chip:      { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  chipText:  { fontSize: 12, fontWeight: '600' },
-});
