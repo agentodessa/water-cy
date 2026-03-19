@@ -1,30 +1,38 @@
 import { BlurView } from 'expo-blur';
+import { cssInterop, useColorScheme } from 'nativewind';
 import React from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
+import { View, ViewStyle } from 'react-native';
+
+cssInterop(BlurView, { className: 'style' });
 
 interface GlassCardProps {
   children: React.ReactNode;
+  className?: string;
   style?: ViewStyle;
   padding?: number;
 }
 
-export function GlassCard({ children, style, padding = 16 }: GlassCardProps) {
-  const { isDark, blurIntensity, colors } = useTheme();
+export function GlassCard({ children, className, style, padding = 16 }: GlassCardProps) {
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const blurIntensity = isDark ? 80 : 60;
+
+  const cardOverlay = isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.12)';
+  const cardBorder  = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)';
+
   return (
     <BlurView
       intensity={blurIntensity}
       tint={isDark ? 'dark' : 'light'}
-      style={[styles.blur, style]}
+      className={`rounded-[20px] overflow-hidden ${className ?? ''}`}
+      style={style}
     >
-      <View style={[styles.overlay, { backgroundColor: colors.cardOverlay, borderColor: colors.cardBorder, padding }]}>
+      <View
+        className="rounded-[20px] border"
+        style={{ backgroundColor: cardOverlay, borderColor: cardBorder, padding }}
+      >
         {children}
       </View>
     </BlurView>
   );
 }
-
-const styles = StyleSheet.create({
-  blur:    { borderRadius: 20, overflow: 'hidden' },
-  overlay: { borderWidth: 1, borderRadius: 20 },
-});
