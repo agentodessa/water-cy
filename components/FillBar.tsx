@@ -1,7 +1,6 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { getFillColor } from '../theme/colors';
-import { useTheme } from '../theme/ThemeContext';
+import { View } from 'react-native';
+import { getFillBgClass } from '../lib/utils';
 
 /** percentage: fractional value 0.0–1.0 (e.g. 0.65 = 65%) */
 interface FillBarProps {
@@ -10,17 +9,13 @@ interface FillBarProps {
 }
 
 export function FillBar({ percentage, height = 6 }: FillBarProps) {
-  const { colors } = useTheme();
-  const fillColor = getFillColor(percentage);
   const clampedPct = Math.min(Math.max(percentage * 100, 0), 100);
   return (
-    <View style={[styles.track, { height, backgroundColor: colors.surface }]}>
-      <View style={[styles.fill, { width: `${clampedPct}%`, height, backgroundColor: fillColor }]} />
+    <View className="rounded-[3px] overflow-hidden w-full bg-white dark:bg-gray-900" style={{ height }}>
+      <View
+        className={`rounded-[3px] ${getFillBgClass(percentage)}`}
+        style={{ width: `${clampedPct}%`, height }}
+      />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  track: { borderRadius: 3, overflow: 'hidden', width: '100%' },
-  fill:  { borderRadius: 3 },
-});
