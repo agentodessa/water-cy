@@ -1,15 +1,16 @@
+import { useColorScheme } from 'nativewind';
 import React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DamCard } from '../../components/DamCard';
 import { Shimmer } from '../../components/Shimmer';
 import { SystemGauge } from '../../components/SystemGauge';
 import { useDateStatistics } from '../../hooks/useDateStatistics';
 import { usePercentages } from '../../hooks/usePercentages';
-import { useTheme } from '../../theme/ThemeContext';
 
 export default function HomeScreen() {
-  const { colors, isDark, toggleTheme } = useTheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const { data: percentages, isLoading: loadingPct, refetch: refetchPct } = usePercentages();
   const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useDateStatistics();
@@ -21,25 +22,29 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]"
       contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
           onRefresh={() => { refetchPct(); refetchStats(); }}
-          tintColor={colors.accent}
+          tintColor="#0EA5E9"
         />
       }
     >
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Cyprus Water</Text>
-        <TouchableOpacity onPress={toggleTheme} style={styles.themeBtn}>
-          <Text style={{ fontSize: 20 }}>{isDark ? '☀️' : '🌙'}</Text>
+      <View
+        className="flex-row items-center justify-between px-4 pb-2"
+        style={{ paddingTop: insets.top + 12 }}
+      >
+        <Text className="text-[22px] font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Cyprus Water</Text>
+        <TouchableOpacity
+          onPress={() => setColorScheme(isDark ? 'light' : 'dark')}
+          className="p-2"
+        >
+          <Text className="text-xl">{isDark ? '☀️' : '🌙'}</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Hero Gauge */}
       {isLoading
         ? <Shimmer height={240} borderRadius={20} style={{ margin: 16 }} />
         : percentages
@@ -50,12 +55,11 @@ export default function HomeScreen() {
             />
           : null}
 
-      {/* All Reservoirs strip */}
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>All Reservoirs</Text>
+      <Text className="text-base font-bold px-4 mt-5 mb-2.5 text-slate-900 dark:text-slate-100">All Reservoirs</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.strip}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
       >
         {isLoading
           ? Array.from({ length: 5 }).map((_, i) => (
@@ -66,19 +70,18 @@ export default function HomeScreen() {
             ))}
       </ScrollView>
 
-      {/* Today's Inflow grid */}
       {stats && (
         <>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Today's Inflow (MCM)</Text>
-          <View style={styles.inflowGrid}>
+          <Text className="text-base font-bold px-4 mt-5 mb-2.5 text-slate-900 dark:text-slate-100">Today's Inflow (MCM)</Text>
+          <View className="flex-row flex-wrap px-3 gap-2">
             {Object.entries(stats.inflowInMCM)
               .filter(([, v]) => v > 0)
               .sort((a, b) => b[1] - a[1])
               .slice(0, 6)
               .map(([name, inflow]) => (
-                <View key={name} style={[styles.inflowItem, { backgroundColor: colors.surface }]}>
-                  <Text style={[styles.inflowName, { color: colors.textSecondary }]} numberOfLines={1}>{name}</Text>
-                  <Text style={[styles.inflowValue, { color: colors.accent }]}>{inflow.toFixed(3)}</Text>
+                <View key={name} className="w-[30%] rounded-xl p-2.5 bg-white dark:bg-gray-900">
+                  <Text className="text-[10px] font-semibold mb-0.5 text-slate-500 dark:text-slate-400" numberOfLines={1}>{name}</Text>
+                  <Text className="text-sm font-bold text-sky-500">{inflow.toFixed(3)}</Text>
                 </View>
               ))}
           </View>
@@ -87,16 +90,3 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container:    { flex: 1 },
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 8 },
-  title:        { fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
-  themeBtn:     { padding: 8 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', paddingHorizontal: 16, marginTop: 20, marginBottom: 10 },
-  strip:        { paddingHorizontal: 16, paddingBottom: 4 },
-  inflowGrid:   { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 8 },
-  inflowItem:   { width: '30%', borderRadius: 12, padding: 10 },
-  inflowName:   { fontSize: 10, fontWeight: '600', marginBottom: 2 },
-  inflowValue:  { fontSize: 14, fontWeight: '700' },
-});
