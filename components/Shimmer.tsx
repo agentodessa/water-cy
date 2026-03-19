@@ -1,4 +1,3 @@
-import { cssInterop } from 'nativewind';
 import React, { useEffect } from 'react';
 import { DimensionValue, ViewStyle } from 'react-native';
 import Animated, {
@@ -8,8 +7,6 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-
-cssInterop(Animated.View, { className: 'style' });
 
 interface ShimmerProps {
   width?: number | string;

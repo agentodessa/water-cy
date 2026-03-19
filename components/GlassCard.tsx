@@ -1,9 +1,7 @@
 import { BlurView } from 'expo-blur';
-import { cssInterop, useColorScheme } from 'nativewind';
+import { useColorScheme } from 'nativewind';
 import React from 'react';
 import { View, ViewStyle } from 'react-native';
-
-cssInterop(BlurView, { className: 'style' });
 
 interface GlassCardProps {
   children: React.ReactNode;
