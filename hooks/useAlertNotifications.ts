@@ -1,17 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import type { Alert } from './useAlerts';
 
 const SEEN_KEY = 'seen-alert-ids';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Lazy-load expo-notifications — crashes in Expo Go where the native module is missing
+let Notifications: typeof import('expo-notifications') | null = null;
+try {
+  Notifications = require('expo-notifications');
+  Notifications!.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+} catch {
+  console.warn('expo-notifications not available — push notifications disabled');
+}
 
 async function loadSeenIds(): Promise<Set<string>> {
   const raw = await AsyncStorage.getItem(SEEN_KEY);
@@ -37,7 +43,7 @@ export function useAlertNotifications(alerts: Alert[] | undefined) {
 
   // Request permission once
   useEffect(() => {
-    if (hasRequestedPermission.current) return;
+    if (!Notifications || hasRequestedPermission.current) return;
     hasRequestedPermission.current = true;
     Notifications.requestPermissionsAsync();
   }, []);
@@ -50,16 +56,18 @@ export function useAlertNotifications(alerts: Alert[] | undefined) {
       a => a.severity === 'Red' && !seenIds.current.has(a.id),
     );
 
-    for (const alert of newRedAlerts) {
-      seenIds.current.add(alert.id);
-      Notifications.scheduleNotificationAsync({
-        content: {
-          title: `🚨 ${alert.title}`,
-          body: alert.description,
-          data: { url: alert.url },
-        },
-        trigger: { type: 'timeInterval', seconds: 1, repeats: false },
-      });
+    if (Notifications) {
+      for (const alert of newRedAlerts) {
+        seenIds.current.add(alert.id);
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: `🚨 ${alert.title}`,
+            body: alert.description,
+            data: { url: alert.url },
+          },
+          trigger: { type: 'timeInterval', seconds: 1, repeats: false },
+        });
+      }
     }
 
     // Mark all alerts as seen (not just Red)
