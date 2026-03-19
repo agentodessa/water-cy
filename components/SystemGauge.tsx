@@ -1,10 +1,10 @@
+import { useColorScheme } from 'nativewind';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { GlassCard } from './GlassCard';
-import { getFillColor } from '../theme/colors';
 import { formatPercentage } from '../lib/format';
-import { useTheme } from '../theme/ThemeContext';
+import { getFillClass } from '../lib/utils';
+import { GlassCard } from './GlassCard';
 
 const SIZE   = 200;
 const STROKE = 14;
@@ -32,36 +32,31 @@ interface SystemGaugeProps {
 }
 
 export function SystemGauge({ percentage, date }: SystemGaugeProps) {
-  const { colors } = useTheme();
+  const { colorScheme } = useColorScheme();
 
   const endAngle  = START_ANGLE + ARC_DEG;
   const fillAngle = START_ANGLE + ARC_DEG * percentage;
   const trackPath = arc(START_ANGLE, endAngle);
   const fillPath  = percentage > 0 ? arc(START_ANGLE, fillAngle) : '';
-  const fillColor = getFillColor(percentage);
+
+  const trackColor = colorScheme === 'dark' ? '#111827' : '#FFFFFF';
+  const fillColor  = percentage < 0.2 ? '#EF4444' : percentage < 0.5 ? '#F59E0B' : '#10B981';
 
   return (
-    <GlassCard style={styles.card}>
-      <View style={styles.container}>
+    <GlassCard className="m-4 items-center">
+      <View className="items-center justify-center">
         <Svg width={SIZE} height={SIZE}>
-          <Path d={trackPath} stroke={colors.surface} strokeWidth={STROKE} fill="none" strokeLinecap="round" />
+          <Path d={trackPath} stroke={trackColor} strokeWidth={STROKE} fill="none" strokeLinecap="round" />
           {fillPath ? <Path d={fillPath} stroke={fillColor} strokeWidth={STROKE} fill="none" strokeLinecap="round" /> : null}
         </Svg>
-        <View style={styles.centerText}>
-          <Text style={[styles.pct, { color: fillColor }]}>{formatPercentage(percentage)}</Text>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>System capacity</Text>
+        <View className="absolute items-center">
+          <Text className={`text-[36px] font-extrabold tracking-[-1px] ${getFillClass(percentage)}`}>
+            {formatPercentage(percentage)}
+          </Text>
+          <Text className="text-xs font-medium mt-0.5 text-slate-500 dark:text-slate-400">System capacity</Text>
         </View>
       </View>
-      <Text style={[styles.date, { color: colors.textSecondary }]}>{date}</Text>
+      <Text className="text-xs mt-1 mb-1 text-slate-500 dark:text-slate-400">{date}</Text>
     </GlassCard>
   );
 }
-
-const styles = StyleSheet.create({
-  card:       { margin: 16, alignItems: 'center' },
-  container:  { alignItems: 'center', justifyContent: 'center' },
-  centerText: { position: 'absolute', alignItems: 'center' },
-  pct:        { fontSize: 36, fontWeight: '800', letterSpacing: -1 },
-  label:      { fontSize: 12, fontWeight: '500', marginTop: 2 },
-  date:       { fontSize: 12, marginTop: 4, marginBottom: 4 },
-});
