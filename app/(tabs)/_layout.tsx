@@ -1,48 +1,42 @@
-import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { Tabs } from 'expo-router';
-import { useColorScheme } from 'nativewind';
-import { StyleSheet } from 'react-native';
+import { Icon } from 'expo-router';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
 export default function TabLayout() {
-  const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const blurIntensity = isDark ? 80 : 60;
-
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'transparent',
-          borderTopColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)',
-          elevation: 0,
-        },
-        tabBarBackground: () => (
-          <BlurView
-            intensity={blurIntensity}
-            tint={isDark ? 'dark' : 'light'}
-            style={StyleSheet.absoluteFill}
-          />
-        ),
-        tabBarActiveTintColor: '#0EA5E9',
-        tabBarInactiveTintColor: isDark ? '#94A3B8' : '#64748B',
-        tabBarLabelStyle: { fontWeight: '600', fontSize: 11 },
-      }}
+    <NativeTabs
+      tintColor="#0EA5E9"
+      minimizeBehavior="automatic"
+      sidebarAdaptable
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Ionicons name="water" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="dams"
-        options={{ title: 'Dams', tabBarIcon: ({ color, size }) => <Ionicons name="layers" size={size} color={color} /> }}
-      />
-      <Tabs.Screen
-        name="trends"
-        options={{ title: 'Trends', tabBarIcon: ({ color, size }) => <Ionicons name="trending-up" size={size} color={color} /> }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="index">
+        <Icon sf={{ default: 'drop', selected: 'drop.fill' }} />
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="dams">
+        <Icon sf={{ default: 'square.3.layers.3d', selected: 'square.3.layers.3d.fill' }} />
+        <NativeTabs.Trigger.Label>Dams</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="trends">
+        <Icon sf={{ default: 'chart.line.uptrend.xyaxis', selected: 'chart.line.uptrend.xyaxis.circle.fill' }} />
+        <NativeTabs.Trigger.Label>Trends</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="alerts">
+        <Icon sf={{ default: 'exclamationmark.triangle', selected: 'exclamationmark.triangle.fill' }} />
+        <NativeTabs.Trigger.Label>Alerts</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="calculator">
+        <Icon sf={{ default: 'drop.circle', selected: 'drop.circle.fill' }} />
+        <NativeTabs.Trigger.Label>Calculator</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="earthquakes">
+        <Icon sf={{ default: 'waveform', selected: 'waveform.badge.exclamationmark' }} />
+        <NativeTabs.Trigger.Label>Quakes</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
