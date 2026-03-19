@@ -1,3 +1,4 @@
+import { cssInterop } from 'nativewind';
 import React, { useEffect } from 'react';
 import { DimensionValue, ViewStyle } from 'react-native';
 import Animated, {
@@ -7,7 +8,8 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { useTheme } from '../theme/ThemeContext';
+
+cssInterop(Animated.View, { className: 'style' });
 
 interface ShimmerProps {
   width?: number | string;
@@ -17,7 +19,6 @@ interface ShimmerProps {
 }
 
 export function Shimmer({ width = '100%', height = 20, borderRadius = 8, style }: ShimmerProps) {
-  const { colors } = useTheme();
   const opacity = useSharedValue(0.3);
 
   useEffect(() => {
@@ -32,8 +33,9 @@ export function Shimmer({ width = '100%', height = 20, borderRadius = 8, style }
 
   return (
     <Animated.View
+      className="bg-white dark:bg-gray-900"
       style={[
-        { width: width as DimensionValue, height, borderRadius, backgroundColor: colors.surface },
+        { width: width as DimensionValue, height, borderRadius },
         animStyle,
         style,
       ]}
