@@ -20,6 +20,10 @@ echo ">>> Installing dependencies"
 cd "$CI_PRIMARY_REPOSITORY_PATH"
 bun install --frozen-lockfile
 
+echo ">>> Rebuilding lightningcss for current platform (Xcode Cloud is x64)"
+cd "$CI_PRIMARY_REPOSITORY_PATH"
+npm rebuild lightningcss
+
 echo ">>> Installing CocoaPods"
 cd "$CI_PRIMARY_REPOSITORY_PATH/ios"
 pod install
