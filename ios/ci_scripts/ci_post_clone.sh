@@ -8,12 +8,17 @@ export NVM_DIR="$HOME/.nvm"
 nvm install 22
 nvm use 22
 
+echo ">>> Installing bun"
+curl -fsSL https://bun.sh/install | bash
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 echo ">>> Installing cmake (required by Hermes)"
 brew install cmake
 
-echo ">>> Installing npm dependencies"
+echo ">>> Installing dependencies"
 cd "$CI_PRIMARY_REPOSITORY_PATH"
-npm install
+bun install --frozen-lockfile
 
 echo ">>> Installing CocoaPods"
 cd "$CI_PRIMARY_REPOSITORY_PATH/ios"
