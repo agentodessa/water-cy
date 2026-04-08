@@ -28,7 +28,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>cyprus-water</string>
-				<string>com.andrii.melnykov.water-cy</string>
+				<string>com.andrii.melnykov.cyprus-water</string>
 			</array>
 		</dict>
 	</array>
