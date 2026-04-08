@@ -21,7 +21,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CyprusWater/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CyprusWater/Info.plist; sourceTree = "<group>"; };
 		2DEE8F4A7E4E15B580DB88DC /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-CyprusWater/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		3B4AA82B9A9184BB6650BF57 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = CyprusWater/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		3B4AA82B9A9184BB6650BF57 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = CyprusWater/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = CyprusWater/SplashScreen.storyboard; sourceTree = "<group>"; };
 		B1E34A432B824BE7710CBCC4 /* libPods-CyprusWater.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CyprusWater.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
@@ -128,7 +128,6 @@
 				F384831E6B2AA0508FBA6225 /* Pods-CyprusWater.debug.xcconfig */,
 				D7E9121EE57B430EB46BCC5C /* Pods-CyprusWater.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -347,12 +346,14 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CyprusWater/CyprusWater.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8KRX99TQYS;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
 				INFOPLIST_FILE = CyprusWater/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -365,7 +366,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.andrii.melnykov.cyprus-water";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.andrii.melnykov.cy-water";
 				PRODUCT_NAME = CyprusWater;
 				SWIFT_OBJC_BRIDGING_HEADER = "CyprusWater/CyprusWater-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -383,7 +384,9 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = CyprusWater/CyprusWater.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8KRX99TQYS;
 				INFOPLIST_FILE = CyprusWater/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -396,7 +399,7 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = "com.andrii.melnykov.cyprus-water";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.andrii.melnykov.cy-water";
 				PRODUCT_NAME = CyprusWater;
 				SWIFT_OBJC_BRIDGING_HEADER = "CyprusWater/CyprusWater-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
