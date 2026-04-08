@@ -1,7 +1,6 @@
 import { useColorScheme } from 'nativewind';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dimensions, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VictoryArea, VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory-native';
 import { Shimmer } from '../../components/Shimmer';
 import { useMonthlyInflows } from '../../hooks/useMonthlyInflows';
@@ -12,7 +11,6 @@ const YEAR_COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function TrendsScreen() {
   const { colorScheme } = useColorScheme();
-  const insets = useSafeAreaInsets();
   const [period, setPeriod] = useState<Period>('5Y');
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
 
@@ -69,10 +67,10 @@ export default function TrendsScreen() {
   return (
     <ScrollView
       className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]"
-      contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+      contentInsetAdjustmentBehavior="automatic"
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor="#0EA5E9" />}
     >
-      <View className="px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+      <View className="px-4 pt-3 pb-3">
         <Text className="text-[22px] font-extrabold tracking-tight text-slate-900 dark:text-slate-100">Historical Trends</Text>
       </View>
 

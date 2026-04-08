@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import React, { useState } from 'react';
 import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DamRow } from '../../components/DamRow';
 import { Shimmer } from '../../components/Shimmer';
 import { useDams } from '../../hooks/useDams';
@@ -13,7 +12,6 @@ type SortKey = 'fill' | 'capacity' | 'name';
 
 export default function DamsScreen() {
   const { colorScheme } = useColorScheme();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [sort, setSort] = useState<SortKey>('fill');
 
@@ -39,7 +37,7 @@ export default function DamsScreen() {
   return (
     <ScrollView
       className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]"
-      contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+      contentInsetAdjustmentBehavior="automatic"
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
@@ -48,7 +46,7 @@ export default function DamsScreen() {
         />
       }
     >
-      <View className="px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
+      <View className="px-4 pt-3 pb-3">
         <Text className="text-[22px] font-extrabold tracking-tight mb-3 text-slate-900 dark:text-slate-100">Reservoirs</Text>
         <View className="flex-row gap-2">
           {(['fill', 'capacity', 'name'] as SortKey[]).map(key => (

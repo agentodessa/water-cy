@@ -22,7 +22,20 @@
       "Bash(npm show:*)",
       "Bash(bun --version)",
       "Bash(bun install:*)",
-      "Bash(node -e \"require\\(''''nativewind/preset''''\\)\")"
+      "Bash(node -e \"require\\(''''nativewind/preset''''\\)\")",
+      "Bash(bun start:*)",
+      "Bash(jobs)",
+      "Bash(kill %1)",
+      "Bash(bun add:*)",
+      "Bash(kill %2)",
+      "Bash(node -e \"console.log\\(require.resolve\\(''./stubs/react-dom-client.js''\\)\\)\")",
+      "Bash(find node_modules/nativewind -name *.css)",
+      "Bash(jobs -l)",
+      "Bash(curl -s http://localhost:8081/status)",
+      "Bash(curl -s \"http://localhost:8081/index.bundle?platform=ios&dev=true\")",
+      "Bash(curl -s \"http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true\" -o /tmp/bundle_test.txt)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)"
     ]
   }
 }

@@ -38,7 +38,7 @@ export default function DamDetailScreen() {
   const capacityMCM = dam.capacity / 1_000_000;
 
   return (
-    <ScrollView className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]">
+    <ScrollView className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]" contentInsetAdjustmentBehavior="automatic">
       <View className="pb-10">
         <View className="relative">
           {dam.imageUrl
