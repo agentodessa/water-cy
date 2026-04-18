@@ -10,20 +10,20 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { GlassCard } from '../../components/GlassCard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TARGET   = 125;           // L per person per day
 const AVG_DAYS = 30.44;
 
-interface Category { label: string; color: string; bg: string }
+interface Category { label: string; color: string }
 
 function getCategory(l: number): Category {
-  if (l < 100)   return { label: 'Excellent',     color: '#10B981', bg: '#10B98118' };
-  if (l < 112.5) return { label: 'Good',           color: '#34D399', bg: '#34D39918' };
-  if (l < 137.5) return { label: 'Average',        color: '#F59E0B', bg: '#F59E0B18' };
-  if (l < 150)   return { label: 'Slightly High',  color: '#FB923C', bg: '#FB923C18' };
-  if (l < 187.5) return { label: 'High',           color: '#EF4444', bg: '#EF444418' };
-  return               { label: 'Very High',       color: '#B91C1C', bg: '#B91C1C18' };
+  if (l < 100)   return { label: 'Excellent',    color: '#10B981' };
+  if (l < 112.5) return { label: 'Good',         color: '#34D399' };
+  if (l < 137.5) return { label: 'Average',      color: '#F59E0B' };
+  if (l < 150)   return { label: 'Slightly High',color: '#FB923C' };
+  if (l < 187.5) return { label: 'High',         color: '#EF4444' };
+  return               { label: 'Very High',     color: '#B91C1C' };
 }
 
 function colorFor(l: number): string {
@@ -36,20 +36,48 @@ function colorFor(l: number): string {
   return '#B91C1C';
 }
 
-// ─── Label helper ─────────────────────────────────────────────────────────────
-function Label({ children }: { children: string }) {
-  return (
-    <Text className="text-[10px] font-bold uppercase tracking-widest mb-1.5 text-slate-500 dark:text-slate-400">
-      {children}
-    </Text>
-  );
+function alphaHex(hex: string, alpha: number): string {
+  const a = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16).padStart(2, '0');
+  return `${hex}${a}`;
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
+interface ThemeColors {
+  cardBg: string;
+  cardBorder: string;
+  text: string;
+  meta: string;
+  dim: string;
+  inputBg: string;
+  track: string;
+}
+
+function useThemeColors(isDark: boolean): ThemeColors {
+  return isDark
+    ? {
+        cardBg:     'rgba(255,255,255,0.04)',
+        cardBorder: 'rgba(255,255,255,0.08)',
+        text:       '#F1F5F9',
+        meta:       '#94A3B8',
+        dim:        '#64748B',
+        inputBg:    'rgba(255,255,255,0.06)',
+        track:      'rgba(255,255,255,0.10)',
+      }
+    : {
+        cardBg:     '#FFFFFF',
+        cardBorder: 'rgba(15,23,42,0.06)',
+        text:       '#0F172A',
+        meta:       '#64748B',
+        dim:        '#94A3B8',
+        inputBg:    'rgba(15,23,42,0.04)',
+        track:      '#E2E8F0',
+      };
+}
+
 export default function CalculatorScreen() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const inputBg = isDark ? 'bg-white/10' : 'bg-black/5';
+  const theme = useThemeColors(isDark);
+  const insets = useSafeAreaInsets();
 
   const [consumption, setConsumption] = useState('');
   const [months, setMonths]           = useState('');
@@ -71,8 +99,6 @@ export default function CalculatorScreen() {
   const pledgedLpppd = result ? result.lpppd * (1 - pledge) : null;
   const pledgedCat   = pledgedLpppd != null ? getCategory(pledgedLpppd) : null;
 
-  const inputStyle = `rounded-2xl px-4 py-3.5 text-base font-semibold text-slate-900 dark:text-slate-100 ${inputBg}`;
-
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-[#F0F4F8] dark:bg-[#0A0F1E]"
@@ -81,10 +107,9 @@ export default function CalculatorScreen() {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
       >
-        {/* Header */}
-        <View className="px-4 pt-3 pb-2">
+        <View className="px-4 pb-3" style={{ paddingTop: insets.top + 12 }}>
           <Text className="text-[22px] font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
             Water Calculator
           </Text>
@@ -93,107 +118,132 @@ export default function CalculatorScreen() {
           </Text>
         </View>
 
-        {/* ── Inputs ── */}
-        <GlassCard className="mx-4 mt-2">
-          <Label>Water bill (m³)</Label>
-          <TextInput
-            className={inputStyle}
+        <Card theme={theme}>
+          <Eyebrow theme={theme}>Water bill (m³)</Eyebrow>
+          <CalcInput
             placeholder="e.g. 24"
-            placeholderTextColor={isDark ? '#475569' : '#94A3B8'}
-            keyboardType="decimal-pad"
             value={consumption}
             onChangeText={t => (parseFloat(t) <= 500 || t === '') && setConsumption(t)}
+            keyboardType="decimal-pad"
             maxLength={6}
+            theme={theme}
           />
 
-          <View className="flex-row gap-3 mt-4">
+          <View className="flex-row" style={{ gap: 10, marginTop: 14 }}>
             <View className="flex-1">
-              <Label>Period (months)</Label>
-              <TextInput
-                className={inputStyle}
+              <Eyebrow theme={theme}>Period (months)</Eyebrow>
+              <CalcInput
                 placeholder="e.g. 4"
-                placeholderTextColor={isDark ? '#475569' : '#94A3B8'}
-                keyboardType="number-pad"
                 value={months}
                 onChangeText={setMonths}
+                keyboardType="number-pad"
                 maxLength={2}
+                theme={theme}
               />
             </View>
             <View className="flex-1">
-              <Label>People</Label>
-              <TextInput
-                className={inputStyle}
+              <Eyebrow theme={theme}>People</Eyebrow>
+              <CalcInput
                 placeholder="e.g. 3"
-                placeholderTextColor={isDark ? '#475569' : '#94A3B8'}
-                keyboardType="number-pad"
                 value={people}
-                onChangeText={t => (parseInt(t) <= 15 || t === '') && setPeople(t)}
+                onChangeText={t => (parseInt(t, 10) <= 15 || t === '') && setPeople(t)}
+                keyboardType="number-pad"
                 maxLength={2}
+                theme={theme}
               />
             </View>
           </View>
-        </GlassCard>
+        </Card>
 
         {result && cat ? (
           <>
-            {/* ── Result ── */}
-            <GlassCard className="mx-4 mt-3">
-              <View className="flex-row items-start justify-between mb-3">
-                <View>
-                  <Text className="text-[12px] font-semibold text-slate-500 dark:text-slate-400 mb-0.5">
-                    Daily per person
-                  </Text>
-                  <Text className="text-[40px] font-black leading-none" style={{ color: fill }}>
-                    {result.lpppd.toFixed(0)}
-                    <Text className="text-[18px] font-bold"> L/day</Text>
-                  </Text>
+            <Card theme={theme}>
+              <View className="flex-row items-start justify-between" style={{ marginBottom: 14 }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Eyebrow theme={theme}>Daily per person</Eyebrow>
+                  <View className="flex-row items-baseline" style={{ marginTop: 6 }}>
+                    <Text
+                      style={{
+                        fontSize: 44,
+                        fontWeight: '900',
+                        color: fill,
+                        letterSpacing: -1.5,
+                        lineHeight: 46,
+                      }}
+                    >
+                      {result.lpppd.toFixed(0)}
+                    </Text>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: theme.meta, marginLeft: 6 }}>
+                      L/day
+                    </Text>
+                  </View>
                 </View>
-                <View className="px-3 py-1.5 rounded-full mt-1" style={{ backgroundColor: cat.bg }}>
-                  <Text className="text-[12px] font-bold" style={{ color: cat.color }}>
+                <View
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 999,
+                    backgroundColor: alphaHex(cat.color, 0.14),
+                    marginTop: 4,
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: cat.color, letterSpacing: 0.3 }}>
                     {cat.label}
                   </Text>
                 </View>
               </View>
 
-              {/* Target marker bar */}
-              <View className="h-2.5 rounded-full bg-slate-200 dark:bg-white/10 mb-2 overflow-hidden">
-                <View
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min((result.lpppd / (TARGET * 2)) * 100, 100)}%`,
-                    backgroundColor: fill,
-                  }}
-                />
-              </View>
-              <View className="flex-row justify-between">
-                <Text className="text-[11px] text-slate-400">Target: {TARGET} L/day</Text>
-                <Text className="text-[12px] font-bold" style={{ color: fill }}>
+              <TargetBar lpppd={result.lpppd} color={fill} trackColor={theme.track} />
+
+              <View className="flex-row justify-between" style={{ marginTop: 8 }}>
+                <Text style={{ fontSize: 11, color: theme.dim, fontWeight: '600' }}>
+                  Target {TARGET} L/day
+                </Text>
+                <Text style={{ fontSize: 12, fontWeight: '800', color: fill }}>
                   {result.diffPct > 0 ? '+' : ''}{result.diffPct.toFixed(1)}% vs target
                 </Text>
               </View>
-            </GlassCard>
+            </Card>
 
-            {/* ── Pledge ── */}
-            <GlassCard className="mx-4 mt-3">
-              <Text className="text-[15px] font-bold mb-0.5 text-slate-900 dark:text-slate-100">
+            <Card theme={theme}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: theme.text, letterSpacing: -0.2 }}>
                 Pledge a reduction
               </Text>
-              <Text className="text-[12px] text-slate-500 dark:text-slate-400 mb-4">
+              <Text style={{ fontSize: 12, color: theme.meta, marginTop: 2 }}>
                 How much will you commit to saving?
               </Text>
 
-              <View className="flex-row justify-between items-center mb-3">
-                <Text className="text-[32px] font-black leading-none" style={{ color: fill }}>
+              <View className="flex-row justify-between items-end" style={{ marginTop: 16, marginBottom: 8 }}>
+                <Text
+                  style={{
+                    fontSize: 36,
+                    fontWeight: '900',
+                    color: fill,
+                    letterSpacing: -1.2,
+                    lineHeight: 38,
+                  }}
+                >
                   {Math.round(pledge * 100)}%
                 </Text>
-                {pledgedLpppd != null && (
+                {pledgedLpppd != null ? (
                   <View className="items-end">
-                    <Text className="text-[11px] text-slate-500 dark:text-slate-400">New consumption</Text>
-                    <Text className="text-[22px] font-bold" style={{ color: pledgedCat?.color }}>
-                      {pledgedLpppd.toFixed(0)} L/day
+                    <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 1.3, color: theme.dim, textTransform: 'uppercase' }}>
+                      New
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: '900',
+                        color: pledgedCat?.color,
+                        letterSpacing: -0.5,
+                        marginTop: 2,
+                      }}
+                    >
+                      {pledgedLpppd.toFixed(0)}
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: theme.meta }}> L/day</Text>
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
 
               <Slider
@@ -203,30 +253,40 @@ export default function CalculatorScreen() {
                 maximumValue={1}
                 step={0.01}
                 minimumTrackTintColor={fill}
-                maximumTrackTintColor={isDark ? '#1E293B' : '#E2E8F0'}
+                maximumTrackTintColor={theme.track}
                 thumbTintColor={fill}
                 style={{ marginHorizontal: -8 }}
               />
 
-              <View className="flex-row justify-between mt-1 mb-4">
-                <Text className="text-[10px] text-slate-400">0%</Text>
-                <Text className="text-[10px] text-slate-400">50%</Text>
-                <Text className="text-[10px] text-slate-400">100%</Text>
+              <View className="flex-row justify-between" style={{ marginTop: -4, marginBottom: 14 }}>
+                <Text style={{ fontSize: 10, color: theme.dim, fontWeight: '600' }}>0%</Text>
+                <Text style={{ fontSize: 10, color: theme.dim, fontWeight: '600' }}>50%</Text>
+                <Text style={{ fontSize: 10, color: theme.dim, fontWeight: '600' }}>100%</Text>
               </View>
 
-              {/* Quick presets */}
-              <View className="flex-row gap-2">
+              <View className="flex-row" style={{ gap: 6 }}>
                 {[0, 0.05, 0.1, 0.2, 0.3].map(p => {
                   const active = Math.round(pledge * 100) === Math.round(p * 100);
                   return (
                     <TouchableOpacity
                       key={p}
+                      activeOpacity={0.7}
                       onPress={() => setPledge(p)}
-                      className={`flex-1 py-2 rounded-full items-center ${
-                        active ? 'bg-sky-500' : isDark ? 'bg-white/10' : 'bg-black/5'
-                      }`}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 8,
+                        borderRadius: 999,
+                        alignItems: 'center',
+                        backgroundColor: active ? '#0EA5E9' : theme.inputBg,
+                      }}
                     >
-                      <Text className={`text-[11px] font-bold ${active ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '800',
+                          color: active ? '#FFFFFF' : theme.meta,
+                        }}
+                      >
                         {Math.round(p * 100)}%
                       </Text>
                     </TouchableOpacity>
@@ -234,55 +294,205 @@ export default function CalculatorScreen() {
                 })}
               </View>
 
-              {pledge > 0 && pledgedCat && (
+              {pledge > 0 && pledgedCat ? (
                 <View
-                  className="mt-3 rounded-2xl px-4 py-3 flex-row items-center gap-3"
-                  style={{ backgroundColor: pledgedCat.bg }}
+                  style={{
+                    marginTop: 14,
+                    paddingHorizontal: 14,
+                    paddingVertical: 12,
+                    borderRadius: 14,
+                    backgroundColor: alphaHex(pledgedCat.color, 0.12),
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                  }}
                 >
-                  <Text className="text-[22px]">{pledge >= 0.2 ? '🎉' : '👍'}</Text>
-                  <View className="flex-1">
-                    <Text className="text-[13px] font-bold" style={{ color: pledgedCat.color }}>
-                      {pledgedCat.label} — {pledgedLpppd!.toFixed(0)} L/day
+                  <Text style={{ fontSize: 24 }}>{pledge >= 0.2 ? '🎉' : '👍'}</Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={{ fontSize: 13, fontWeight: '800', color: pledgedCat.color, letterSpacing: -0.2 }}
+                    >
+                      {pledgedCat.label} · {pledgedLpppd!.toFixed(0)} L/day
                     </Text>
-                    <Text className="text-[11px] mt-0.5 text-slate-500 dark:text-slate-400">
+                    <Text style={{ fontSize: 11, color: theme.meta, marginTop: 2 }}>
                       Saving {(result.lpppd - pledgedLpppd!).toFixed(0)} L per person per day
                     </Text>
                   </View>
                 </View>
-              )}
-            </GlassCard>
+              ) : null}
+            </Card>
 
-            {/* ── Tips ── */}
-            <GlassCard className="mx-4 mt-3">
-              <Text className="text-[15px] font-bold mb-3 text-slate-900 dark:text-slate-100">
+            <Card theme={theme}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: theme.text, marginBottom: 10, letterSpacing: -0.2 }}>
                 Conservation Tips
               </Text>
               {[
-                ['🚿', 'Shorter showers (≤ 5 min)', '~35 L saved/day'],
+                ['🚿', 'Shorter showers (≤ 5 min)',   '~35 L saved/day'],
                 ['🪥', 'Turn off tap while brushing', '~12 L saved/day'],
-                ['🌿', 'Water plants at dawn or dusk', 'less evaporation'],
-                ['🔧', 'Fix leaky taps promptly', 'up to 20 L/day'],
-                ['🥗', 'Less meat, one meal/week', 'up to 500 L saved'],
-              ].map(([icon, tip, saving]) => (
-                <View key={tip} className="flex-row items-start gap-3 mb-3 last:mb-0">
-                  <Text className="text-[20px] leading-tight">{icon}</Text>
+                ['🌿', 'Water plants at dawn or dusk','less evaporation'],
+                ['🔧', 'Fix leaky taps promptly',     'up to 20 L/day'],
+                ['🥗', 'Less meat, one meal/week',    'up to 500 L saved'],
+              ].map(([icon, tip, saving], i, arr) => (
+                <View
+                  key={tip}
+                  className="flex-row items-start"
+                  style={{
+                    gap: 12,
+                    paddingVertical: 10,
+                    borderBottomWidth: i < arr.length - 1 ? 1 : 0,
+                    borderBottomColor: theme.cardBorder,
+                  }}
+                >
+                  <Text style={{ fontSize: 20, lineHeight: 22 }}>{icon}</Text>
                   <View className="flex-1">
-                    <Text className="text-[13px] font-semibold text-slate-800 dark:text-slate-100">{tip}</Text>
-                    <Text className="text-[11px] mt-0.5 text-slate-500 dark:text-slate-400">{saving}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: theme.text }}>{tip}</Text>
+                    <Text style={{ fontSize: 11, color: theme.meta, marginTop: 2 }}>{saving}</Text>
                   </View>
                 </View>
               ))}
-            </GlassCard>
+            </Card>
           </>
         ) : (
-          <View className="items-center mt-10 px-8">
-            <Text className="text-[64px]">💧</Text>
-            <Text className="text-[16px] font-semibold mt-3 text-center text-slate-500 dark:text-slate-400">
+          <View className="items-center mt-12 px-8">
+            <Text style={{ fontSize: 64 }}>💧</Text>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '600',
+                marginTop: 12,
+                textAlign: 'center',
+                color: theme.meta,
+                lineHeight: 22,
+              }}
+            >
               Enter your water bill details above to see your daily consumption
             </Text>
           </View>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+interface CardProps {
+  theme: ThemeColors;
+  children: React.ReactNode;
+}
+
+function Card({ theme, children }: CardProps) {
+  return (
+    <View
+      className="mx-4 mt-3"
+      style={{
+        backgroundColor: theme.cardBg,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: theme.cardBorder,
+        padding: 16,
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+function Eyebrow({ children, theme }: { children: string; theme: ThemeColors }) {
+  return (
+    <Text
+      style={{
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1.4,
+        textTransform: 'uppercase',
+        color: theme.meta,
+        marginBottom: 6,
+      }}
+    >
+      {children}
+    </Text>
+  );
+}
+
+interface CalcInputProps {
+  value: string;
+  placeholder: string;
+  onChangeText: (t: string) => void;
+  keyboardType: 'decimal-pad' | 'number-pad';
+  maxLength?: number;
+  theme: ThemeColors;
+}
+
+function CalcInput({ value, placeholder, onChangeText, keyboardType, maxLength, theme }: CalcInputProps) {
+  return (
+    <TextInput
+      placeholder={placeholder}
+      placeholderTextColor={theme.dim}
+      value={value}
+      onChangeText={onChangeText}
+      keyboardType={keyboardType}
+      maxLength={maxLength}
+      style={{
+        backgroundColor: theme.inputBg,
+        borderRadius: 14,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 16,
+        fontWeight: '700',
+        color: theme.text,
+      }}
+    />
+  );
+}
+
+interface TargetBarProps {
+  lpppd: number;
+  color: string;
+  trackColor: string;
+}
+
+function TargetBar({ lpppd, color, trackColor }: TargetBarProps) {
+  const maxX = TARGET * 2;
+  const fillPct = Math.min((lpppd / maxX) * 100, 100);
+  const targetPct = (TARGET / maxX) * 100;
+
+  return (
+    <View style={{ height: 10, position: 'relative' }}>
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 3,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: trackColor,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 3,
+          height: 4,
+          width: `${fillPct}%`,
+          borderRadius: 2,
+          backgroundColor: color,
+        }}
+      />
+      <View
+        style={{
+          position: 'absolute',
+          left: `${targetPct}%`,
+          top: 0,
+          marginLeft: -5,
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          backgroundColor: '#FFFFFF',
+          borderWidth: 2,
+          borderColor: '#0F172A',
+        }}
+      />
+    </View>
   );
 }

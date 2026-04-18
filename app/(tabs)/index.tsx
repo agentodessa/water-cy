@@ -1,14 +1,31 @@
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { DamCard } from '../../components/DamCard';
+import { DamRow } from '../../components/DamRow';
 import { Shimmer } from '../../components/Shimmer';
 import { SystemGauge } from '../../components/SystemGauge';
+import { useDams } from '../../hooks/useDams';
 import { useDateStatistics } from '../../hooks/useDateStatistics';
 import { usePercentages } from '../../hooks/usePercentages';
 
 const REFRESH_COOLDOWN_MS = 15_000;
+const HOME_DAM_COUNT = 5;
+const HOME_INFLOW_COUNT = 6;
+
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
+function sumStorage(storage?: Record<string, number>): number | undefined {
+  if (!storage) return undefined;
+  const values = Object.values(storage);
+  if (values.length === 0) return undefined;
+  return values.reduce((a, b) => a + b, 0);
+}
 
 function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
   const translateX = useSharedValue(isDark ? 24 : 0);
@@ -59,11 +76,17 @@ function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => vo
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { colorScheme, setColorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { data: percentages, isLoading: loadingPct, refetch: refetchPct } = usePercentages();
-  const { data: stats, isLoading: loadingStats, refetch: refetchStats } = useDateStatistics();
-  const isLoading = loadingPct || loadingStats;
+
+  const dateSevenDaysAgo = useMemo(() => isoDaysAgo(7), []);
+
+  const { data: percentages, isLoading: loadingPct,   refetch: refetchPct }   = usePercentages();
+  const { data: stats,       isLoading: loadingStats, refetch: refetchStats } = useDateStatistics();
+  const { data: pastStats }  = useDateStatistics(dateSevenDaysAgo);
+  const { data: dams,        isLoading: loadingDams,  refetch: refetchDams }  = useDams();
+  const isLoading = loadingPct || loadingStats || loadingDams;
 
   const lastRefreshAt = useRef(0);
   const handleRefresh = useCallback(() => {
@@ -72,10 +95,34 @@ export default function HomeScreen() {
     lastRefreshAt.current = now;
     refetchPct();
     refetchStats();
-  }, [refetchPct, refetchStats]);
+    refetchDams();
+  }, [refetchPct, refetchStats, refetchDams]);
 
-  const damEntries = percentages
-    ? Object.entries(percentages.damNamesToPercentage).sort((a, b) => b[1] - a[1])
+  const delta7d = useMemo(() => {
+    const now  = sumStorage(stats?.storageInMCM);
+    const past = sumStorage(pastStats?.storageInMCM);
+    if (now === undefined || past === undefined) return undefined;
+    return now - past;
+  }, [stats, pastStats]);
+
+  const topDams = percentages && dams
+    ? [...dams]
+        .sort((a, b) => b.capacity - a.capacity)
+        .slice(0, HOME_DAM_COUNT)
+        .map(dam => {
+          const name = dam.nameEn;
+          const pct = percentages.damNamesToPercentage[name] ?? 0;
+          const capacityMCM = dam.capacity / 1_000_000;
+          const storageMCM  = stats?.storageInMCM[name] ?? capacityMCM * pct;
+          return { name, pct, capacityMCM, storageMCM };
+        })
+    : [];
+
+  const topInflows = stats
+    ? Object.entries(stats.inflowInMCM)
+        .filter(([, v]) => v > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, HOME_INFLOW_COUNT)
     : [];
 
   return (
@@ -95,45 +142,69 @@ export default function HomeScreen() {
         <ThemeToggle isDark={isDark} onToggle={() => setColorScheme(isDark ? 'light' : 'dark')} />
       </View>
 
-      {isLoading
-        ? <Shimmer height={240} borderRadius={20} style={{ margin: 16 }} />
+      {loadingPct
+        ? <Shimmer height={320} borderRadius={20} style={{ margin: 16 }} />
         : percentages
           ? <SystemGauge
               percentage={percentages.totalPercentage}
               date={percentages.date}
               totalCapacityInMCM={percentages.totalCapacityInMCM}
+              delta7dMCM={delta7d}
             />
           : null}
 
-      <Text className="text-base font-bold px-4 mt-5 mb-2.5 text-slate-900 dark:text-slate-100">All Reservoirs</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 4 }}
-      >
-        {isLoading
-          ? Array.from({ length: 5 }).map((_, i) => (
-              <Shimmer key={i} width={110} height={90} borderRadius={20} style={{ marginRight: 10 }} />
-            ))
-          : damEntries.map(([name, pct]) => (
-              <DamCard key={name} name={name} percentage={pct} />
-            ))}
-      </ScrollView>
+      <View className="flex-row items-center justify-between px-5 pt-5 pb-2">
+        <Text className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-500">
+          Reservoirs{dams ? ` · ${dams.length}` : ''}
+        </Text>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/dams')}>
+          <Text className="text-[13px] font-semibold text-sky-500">See all</Text>
+        </TouchableOpacity>
+      </View>
 
-      {stats && (
+      {isLoading
+        ? Array.from({ length: HOME_DAM_COUNT }).map((_, i) => (
+            <Shimmer key={i} height={72} borderRadius={14} style={{ marginHorizontal: 16, marginBottom: 10 }} />
+          ))
+        : topDams.map(({ name, pct, capacityMCM, storageMCM }) => (
+            <DamRow
+              key={name}
+              name={name}
+              percentage={pct}
+              capacityMCM={capacityMCM}
+              storageMCM={storageMCM}
+              onPress={() => router.push(`/dam/${name}`)}
+            />
+          ))}
+
+      {topInflows.length > 0 && (
         <>
-          <Text className="text-base font-bold px-4 mt-5 mb-2.5 text-slate-900 dark:text-slate-100">Today's Inflow (MCM)</Text>
-          <View className="flex-row flex-wrap px-3 gap-2">
-            {Object.entries(stats.inflowInMCM)
-              .filter(([, v]) => v > 0)
-              .sort((a, b) => b[1] - a[1])
-              .slice(0, 6)
-              .map(([name, inflow]) => (
-                <View key={name} className="w-[30%] rounded-xl p-2.5 bg-white dark:bg-gray-900">
-                  <Text className="text-[10px] font-semibold mb-0.5 text-slate-500 dark:text-slate-400" numberOfLines={1}>{name}</Text>
-                  <Text className="text-sm font-bold text-sky-500">{inflow.toFixed(3)}</Text>
+          <View className="px-5 pt-5 pb-2">
+            <Text className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-500">
+              Today's Inflow
+            </Text>
+          </View>
+          <View className="flex-row flex-wrap px-4 gap-2 pb-4">
+            {topInflows.map(([name, inflow]) => (
+              <View
+                key={name}
+                className="rounded-xl p-2.5 bg-white dark:bg-gray-900"
+                style={{ width: '31.5%' }}
+              >
+                <Text
+                  className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-500"
+                  numberOfLines={1}
+                >
+                  {name}
+                </Text>
+                <View className="flex-row items-baseline mt-1">
+                  <Text className="text-[15px] font-extrabold text-sky-500" numberOfLines={1}>
+                    {inflow.toFixed(3)}
+                  </Text>
+                  <Text className="text-[10px] font-bold text-slate-400 ml-1">MCM</Text>
                 </View>
-              ))}
+              </View>
+            ))}
           </View>
         </>
       )}
