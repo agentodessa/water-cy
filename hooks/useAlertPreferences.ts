@@ -36,5 +36,11 @@ export function useAlertPreferences() {
     [enabledTypes],
   );
 
-  return { enabledTypes, toggleType, isEnabled };
+  const setAll = useCallback((enabled: boolean) => {
+    const next = new Set<AlertType>(enabled ? ALL_TYPES : []);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...next]));
+    setEnabledTypes(next);
+  }, []);
+
+  return { enabledTypes, toggleType, isEnabled, setAll };
 }
